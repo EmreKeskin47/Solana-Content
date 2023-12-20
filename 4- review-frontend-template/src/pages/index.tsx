@@ -1,3 +1,5 @@
+"use client";
+
 import { AppBar } from "@/components/AppBar";
 import ReviewCard from "@/components/ReviewCard";
 import { useEffect, useState } from "react";
@@ -11,6 +13,9 @@ import ReviewForm from "@/components/Form";
 const REVIEW_PROGRAM_ID = "4bxHsLuaDvpdwXyoiG2stu913TLxLNpANFCWXBCtQpvC";
 
 export default function Home() {
+    const connection = new web3.Connection(web3.clusterApiUrl("devnet"));
+    const { publicKey, sendTransaction } = useWallet();
+
     const [txid, setTxid] = useState("");
     const [reviews, setReviews] = useState<Review[]>([]);
 
@@ -19,7 +24,9 @@ export default function Home() {
     const [description, setDescription] = useState("");
 
     useEffect(() => {
-        const fetchAccounts = async () => {};
+        const fetchAccounts = async () => {
+            await fetchReviews(REVIEW_PROGRAM_ID, connection).then(setReviews);
+        };
         fetchAccounts();
     }, []);
 
@@ -28,7 +35,54 @@ export default function Home() {
         handleTransactionSubmit(review);
     };
 
-    const handleTransactionSubmit = async (review: Review) => {};
+    const handleTransactionSubmit = async (review: Review) => {
+        if (!publicKey) {
+            alert("Please connect wallet");
+            return;
+        }
+
+        const buffer = review.serialize();
+        const transaction = new web3.Transaction();
+
+        const [pda] = await web3.PublicKey.findProgramAddressSync(
+            [publicKey.toBuffer(), Buffer.from(review.title)],
+            new web3.PublicKey(REVIEW_PROGRAM_ID)
+        );
+
+        const insturction = new web3.TransactionInstruction({
+            keys: [
+                {
+                    pubkey: publicKey,
+                    isSigner: true,
+                    isWritable: false,
+                },
+                {
+                    pubkey: pda,
+                    isSigner: false,
+                    isWritable: true,
+                },
+                {
+                    pubkey: web3.SystemProgram.programId,
+                    isSigner: false,
+                    isWritable: false,
+                },
+            ],
+            data: buffer,
+            programId: new web3.PublicKey(REVIEW_PROGRAM_ID),
+        });
+
+        transaction.add(insturction);
+
+        try {
+            let txid = await sendTransaction(transaction, connection);
+            setTxid(
+                `Transaction submitted: https://explorer.solana.com/tx/${txid}?cluster=devnet`
+            );
+        } catch (e) {
+            console.log(JSON.stringify(e));
+            alert(JSON.stringify(e));
+        }
+    };
 
     return (
         <main

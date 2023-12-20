@@ -7,7 +7,7 @@ import { fetchReviews } from "@/util/fetchReviews";
 import { useWallet } from "@solana/wallet-adapter-react";
 import ReviewForm from "@/components/Form";
 
-const REVIEW_PROGRAM_ID = "2xuLAJcbZTqZJ3DNf3DcHgRg7a1dBmtfLnjyvgkNq286";
+const REVIEW_PROGRAM_ID = "4bxHsLuaDvpdwXyoiG2stu913TLxLNpANFCWXBCtQpvC";
 
 export default function Home() {
     const connection = new web3.Connection(web3.clusterApiUrl("devnet"));
@@ -102,7 +102,6 @@ export default function Home() {
             </div>
 
             {txid && <div>{txid}</div>}
-
             <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-3 lg:text-left">
                 {reviews &&
                     reviews.map((review) => {
